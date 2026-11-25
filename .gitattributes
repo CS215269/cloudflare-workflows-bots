@@ -1,0 +1,10 @@
+# 统一以 LF 存储，避免 Windows 上的 CRLF 转换影响 Worker 部署
+* text=auto eol=lf
+
+# 二进制文件不做转换
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary

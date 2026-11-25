@@ -1,0 +1,20 @@
+{
+  "name": "cloudflare-workflows-bots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "基于 Cloudflare Workers Workflows 的机器人合集：每个 bot 一个独立 Worker，可独立部署与回滚",
+  "type": "module",
+  "workspaces": [
+    "bots/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "preview": "npm run preview --workspaces --if-present",
+    "deploy:weather": "npm run deploy --workspace myweather-bot",
+    "dev:weather": "npm run dev --workspace myweather-bot",
+    "tail:weather": "npm run tail --workspace myweather-bot"
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  }
+}

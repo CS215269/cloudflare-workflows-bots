@@ -1,0 +1,53 @@
+name = "myweather-bot"
+main = "src/index.ts"
+compatibility_date = "2025-05-05"
+compatibility_flags = ["nodejs_compat"]
+
+# ---------------------------------------------------------------------------
+# 定时触发（Cron Trigger，UTC 时区）
+#   "36 23 * * *"  -> 北京时间次日 07:36  => 推送“今天”的天气
+#   "0 13 * * *"   -> 北京时间 21:00     => 推送“明天”的天气
+# 注意：Cloudflare Cron 只精确到分钟，且使用 UTC；
+#      两条 Cron 都会命中同一个 scheduled 事件，由 event.cron 决定播报模式。
+# ---------------------------------------------------------------------------
+[triggers]
+crons = [
+  "36 23 * * *",
+  "0 13 * * *",
+]
+
+# ---------------------------------------------------------------------------
+# Workflow 绑定（Cloudflare Workflows）
+# ---------------------------------------------------------------------------
+[[workflows]]
+binding = "WEATHER_WORKFLOW"
+name = "weather-report-workflow"
+class_name = "WeatherReportWorkflow"
+
+# ---------------------------------------------------------------------------
+# 普通变量（非敏感信息，可直接改；敏感信息请用 wrangler secret put）
+# ---------------------------------------------------------------------------
+[vars]
+TIMEZONE = "Asia/Shanghai"
+CITY_ID = "101010100"      # 和风天气 LocationID（城市）
+CITY_NAME = "北京"
+LAT = "39.9042"
+LON = "116.4074"
+# 可选：数据源开关，"1" 开启
+ENABLE_QWEATHER = "1"
+ENABLE_OPEN_METEO = "1"
+ENABLE_WTTR = "0"
+
+# ---------------------------------------------------------------------------
+# 需要 `wrangler secret put XXX` 设置的机密变量：
+#   FEISHU_WEBHOOK_URL   飞书群自定义机器人 Webhook 地址（必填）
+#   FEISHU_SECRET       飞书机器人签名校验密钥（若开启了“签名校验”则必填）
+#   QWEATHER_API_KEY    和风天气 API Key（与 JWT 二选一）
+#   QWEATHER_PROJECT_ID 和风天气 ProjectID（JWT 模式）
+#   QWEATHER_KID        和风天气 KID（JWT 模式）
+#   QWEATHER_PRIVATE_KEY和风天气 Ed25519 私钥 PEM（JWT 模式）
+#   QWEATHER_HOST       和风天气 API 域名，例如 abcxyz.m.qweather.com（JWT 模式可选）
+# ---------------------------------------------------------------------------
+
+[observability]
+enabled = true

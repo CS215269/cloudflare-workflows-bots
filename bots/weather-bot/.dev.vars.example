@@ -1,0 +1,14 @@
+# 本地开发用的环境变量示例（复制为 .dev.vars 后填入真实值）
+# 注意：.dev.vars 已在 .gitignore 中，勿提交
+
+FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx
+FEISHU_SECRET=
+
+# 方式一：API Key 认证
+QWEATHER_API_KEY=
+
+# 方式二：JWT(Ed25519) 认证（可复用 Android 端 local.properties 里的凭据）
+QWEATHER_PROJECT_ID=
+QWEATHER_KID=
+QWEATHER_PRIVATE_KEY=
+QWEATHER_HOST=
