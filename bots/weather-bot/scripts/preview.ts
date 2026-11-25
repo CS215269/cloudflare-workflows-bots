@@ -13,7 +13,7 @@ import { buildFeishuCard, createSign } from "../src/lib/feishu.ts";
 import { createQWeatherToken } from "../src/lib/jwt.ts";
 import { collectSnapshots } from "../src/lib/collect.ts";
 import { addDays, dateLabel, targetDate, zonedParts } from "../src/lib/time.ts";
-import { EVENING_CRON, MORNING_CRON, modeFromCron } from "../src/lib/schedule.ts";
+import { BROADCAST_CRON, modeFromCron } from "../src/lib/schedule.ts";
 import type { Env } from "../src/types.ts";
 
 const TZ = "Asia/Shanghai";
@@ -162,15 +162,15 @@ function check(name: string, cond: boolean, extra = ""): void {
 // ---------------------------------------------------------------------------
 // 1. 时间换算
 // ---------------------------------------------------------------------------
-const beijingMorning = new Date("2026-11-23T23:36:00Z"); // 北京 11/24 07:36
-const beijingNight = new Date("2026-11-24T13:00:00Z"); // 北京 11/24 21:00
+const beijingMorning = new Date("2026-11-23T23:35:00Z"); // 北京 11/24 07:35
+const beijingNight = new Date("2026-11-24T13:35:00Z"); // 北京 11/24 21:35
 check(
-  "07:36(北京时间) 判定为今天",
+  "07:35(北京时间) 判定为今天",
   targetDate("today", beijingMorning, TZ) === TODAY,
   targetDate("today", beijingMorning, TZ),
 );
 check(
-  "21:00(北京时间) 判定为明天",
+  "21:35(北京时间) 判定为明天",
   targetDate("tomorrow", beijingNight, TZ) === TOMORROW,
   targetDate("tomorrow", beijingNight, TZ),
 );
@@ -182,8 +182,8 @@ check("日期标签", dateLabel(TODAY, TZ, beijingMorning) === "11月24日 周�
 // ---------------------------------------------------------------------------
 // 2. Cron -> 模式
 // ---------------------------------------------------------------------------
-check("早班 Cron -> today", modeFromCron(MORNING_CRON, beijingMorning) === "today");
-check("晚班 Cron -> tomorrow", modeFromCron(EVENING_CRON, beijingNight) === "tomorrow");
+check("早播 23:35(UTC) -> today", modeFromCron(BROADCAST_CRON, beijingMorning) === "today");
+check("晚播 13:35(UTC) -> tomorrow", modeFromCron(BROADCAST_CRON, beijingNight) === "tomorrow");
 
 // ---------------------------------------------------------------------------
 // 3. 采集 + 聚合 + 渲染

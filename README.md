@@ -46,7 +46,7 @@ npm run preview
 
 | Bot | Worker 名 | 线上地址 | 说明 |
 |---|---|---|---|
-| `weather-bot` | `myweather-bot` | `myweather-bot.cs215269.workers.dev` | 每天两次（07:36 / 21:00 北京时间）自动播报天气到飞书群；多数据源聚合 + 温差交叉校验 |
+| `weather-bot` | `myweather-bot` | `myweather-bot.cs215269.workers.dev` | 每天两次（07:35 / 21:35 北京时间）自动播报天气到飞书群；多数据源聚合 + 温差交叉校验 |
 
 ## 部署
 
@@ -84,13 +84,13 @@ Workers Free 计划的额度对本仓库完全够用（官方定价见 [Workflow
 | 项目 | Free 额度 | 本仓库用量 |
 |---|---|---|
 | Workers 数量 | 100 / 账号 | 1 |
-| Cron Triggers | **5 / 账号** | 2（weather-bot） |
+| Cron Triggers | **5 / 账号** | 1（weather-bot，合并成单条 `35 13,23 * * *`） |
 | 请求数 | 100,000 / 天 | 约 2 / 天 |
 | Workflow Steps | 3,000 / 天 | 10 / 天（2 次 × 5 步） |
 | 单次调用 CPU | **10 ms** | 各 step 实测 0.03–2.3 ms |
 
 > ⚠️ **Cron Triggers 是 5 条/账号**，不是每个 Worker 5 条。加新 bot 时要先在 Dashboard 确认占用。
-> Free 计划无法用 `limits.cpu_ms` 调高 CPU 上限（该配置仅 Paid 可用），CPU 超限只能优化代码。
+> 免费计划无法用 `limits.cpu_ms` 调高 CPU 上限（该配置仅 Paid 可用），CPU 超限只能优化代码。
 
 ## 新增一个 bot
 
@@ -103,5 +103,5 @@ Workers Free 计划的额度对本仓库完全够用（官方定价见 [Workflow
 ## 约定
 
 - 机密只走 `wrangler secret put` / `.dev.vars`，**不进代码、不进仓库**
-- `wrangler.toml` 的 `[triggers].crons` 与该 bot `src/lib/schedule.ts` 里的 `MORNING_CRON` / `EVENING_CRON` 必须保持一致，否则模式判断会走兜底分支
+- `wrangler.toml` 的 `[triggers].crons` 与该 bot `src/lib/schedule.ts` 里的 `BROADCAST_CRON` / `MODE_BY_UTC_HOUR` 必须保持一致，否则模式判断会走兜底分支
 - Cloudflare Cron 使用 **UTC**，且只在整分钟触发（北京时间 = UTC + 8）

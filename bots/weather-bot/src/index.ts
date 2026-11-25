@@ -4,9 +4,10 @@
  * - scheduled：由 Cloudflare Cron Trigger 触发，创建 Workflow 实例
  * - fetch：提供健康检查 / 手动触发 / 预览卡片 三个 HTTP 接口
  *
- * Cron（UTC） -> 播报模式：
- *   "36 23 * * *"  -> 北京时间 07:36 -> 推送“今天”
- *   "0 13 * * *"   -> 北京时间 21:00 -> 推送“明天”
+ * Cron（UTC） -> 播报模式（单条表达式，每 12 小时触发两次）：
+ *   "35 13,23 * * *"
+ *      -> 北京时间 21:35     -> 推送“明天”
+ *      -> 北京时间次日 07:35 -> 推送“今天”
  */
 
 import type { Env, ReportMode, WorkflowParams } from "./types.ts";
@@ -15,10 +16,10 @@ import { aggregate } from "./lib/aggregate.ts";
 import { buildFeishuCard } from "./lib/feishu.ts";
 import { collectSnapshots } from "./lib/collect.ts";
 import { dateLabel, targetDate } from "./lib/time.ts";
-import { EVENING_CRON, MORNING_CRON, modeFromCron } from "./lib/schedule.ts";
+import { BROADCAST_CRON, modeFromCron } from "./lib/schedule.ts";
 
 export { WeatherReportWorkflow };
-export { MORNING_CRON, EVENING_CRON, modeFromCron };
+export { BROADCAST_CRON, modeFromCron };
 
 /** 依据命中的 Cron 表达式决定播报模式 */
 
@@ -60,7 +61,7 @@ export default {
         now: new Date().toISOString(),
         timezone: env.TIMEZONE,
         city: cityFromEnv(env),
-        crons: { morning: MORNING_CRON, evening: EVENING_CRON },
+        crons: { broadcast: BROADCAST_CRON },
         configured: {
           feishuWebhook: Boolean(env.FEISHU_WEBHOOK_URL),
           feishuSign: Boolean(env.FEISHU_SECRET),
