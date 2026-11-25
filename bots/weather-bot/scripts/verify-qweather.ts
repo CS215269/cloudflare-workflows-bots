@@ -87,11 +87,13 @@ interface Variant {
   developerId?: string;
 }
 
+// 顺序有讲究：官方 Android SDK V5.2.2 的 JWTGenerator 就是「只发 sub、不发 iss」，
+// 所以先试这一组——正常情况下第一条就通过，省一次请求。
 const variants: Variant[] = [];
+variants.push({ label: "不带 iss（官方 Android SDK 的做法）", developerId: undefined });
 if (devId) variants.push({ label: `iss = 开发者ID (${devId})`, developerId: devId });
-variants.push({ label: "不带 iss", developerId: undefined });
-if (!devId || devId !== projectId) {
-  variants.push({ label: `iss = 项目ID（旧实现）`, developerId: projectId });
+if (devId !== projectId) {
+  variants.push({ label: `iss = 项目ID（旧实现写法）`, developerId: projectId });
 }
 
 function decodePart(part: string): unknown {
@@ -161,11 +163,11 @@ console.log();
 if (winner) {
   console.log(`🎉 鉴权通过，可用组合：${winner.label}`);
   if (winner.developerId === undefined) {
-    console.log("   结论：和风天气接受不含 iss 的 JWT —— 你可以不配 QWEATHER_DEV_ID。");
+    console.log("   结论：与官方 Android SDK 行为一致 —— 不需要开发者ID，QWEATHER_DEV_ID 留空即可。");
   } else if (winner.developerId === projectId) {
-    console.log("   结论：iss 需要填「项目ID」（旧实现写法），不需要开发者ID。");
+    console.log("   结论：这个账号要求 iss 填「项目ID」（旧实现写法），不需要开发者ID。");
   } else {
-    console.log("   结论：iss 必须是开发者ID，请设置 QWEATHER_DEV_ID。");
+    console.log("   结论：这个账号的 iss 必须是开发者ID，请设置 QWEATHER_DEV_ID。");
   }
 } else {
   console.error("❌ 所有组合都失败，请对照上面的错误码逐项排查。");

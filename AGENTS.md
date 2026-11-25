@@ -20,6 +20,7 @@
 | tsconfig 拆成 `tsconfig.json` + `tsconfig.scripts.json` | `src/` 跑在 Workers 运行时、`scripts/` 跑在 Node；混在同一个 program 里 URL / Buffer 类型互相冲突 |
 | **不需要付费计划** | Workflows 已包含在 Workers Free 计划内（官方定价页 FAQ：Are Workflows available on the Workers Free plan? → Yes）。唯一硬约束是 10 ms CPU / 每次调用 |
 | 每个 Workflow step 各自是独立调用 | 所以每个 step 各有 10 ms CPU 预算，而不是整个 Workflow 共用 10 ms |
+| 和风天气 JWT **不发 `iss`**，项目ID 放 `sub` | 官方文档说 `iss`=开发者ID 且必填，但官方 Android SDK V5.2.2 的 `JWTGenerator` 字节码实际只拼 `{"alg":"EdDSA","kid":..}` + `{"sub":<项目ID>,"iat":..,"exp":..}`，无 `iss`，且该实现在真实 App 中验证可用 → 以可用实现为准，`QWEATHER_DEV_ID` 默认留空 |
 
 ## 实测数据（用于判断改动是否安全）
 
@@ -35,8 +36,8 @@
 - 4 个阻塞 bug 修复：`WorkflowEntrypoint` 改名、workers-types 升 v5、tsconfig 拆分、`Uint8Array<ArrayBuffer>` 泛型
 - `npm run typecheck` —— src 与 scripts 两个 project 全绿
 - `npm run preview` —— 35/35 通过（离线，不需要网络 / 账号 / 密钥）
-- 和风天气 JWT 3 处 401 bug 修复：`alg` 从 `ED25519` → `EdDSA`、项目ID 从 `iss` → `sub`、`iat` 提前 30s；新增 `QWEATHER_DEV_ID`（iss，可选）
-- 新增 `npm run verify:qweather`：用真实凭据打真实 API，自动试「带 iss / 不带 iss / iss=项目ID」三组，实测 `iss` 到底要不要
+- 和风天气 JWT 3 处 401 bug 修复：`alg` 从 `ED25519` → `EdDSA`、项目ID 从 `iss` → `sub`、`iat` 提前 30s；新增 `QWEATHER_DEV_ID`（iss，默认**不填不发**）
+- 新增 `npm run verify:qweather`：用真实凭据打真实 API，按「不带 iss → 带开发者ID → iss=项目ID」顺序试，实测 `iss` 到底要不要
 - monorepo 骨架（npm workspaces）+ git 初始化，remote 已指向 GitHub 仓库，**已 push**
 
 **未完成**（都需要用户凭据或交互，AI 无法代劳）

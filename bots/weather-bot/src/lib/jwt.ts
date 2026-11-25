@@ -5,6 +5,11 @@
  * header: {"alg":"EdDSA","kid":"<凭据ID>"}
  * payload:{"iss":"<开发者ID>","sub":"<项目ID>","iat":<秒>,"exp":<秒>}
  *
+ * 事实依据（比文档更硬）：官方 Android SDK V5.2.2 的 com.qweather.sdk.JWTGenerator
+ * 字节码里拼的是 {"alg": "EdDSA", "kid": ".."} 与 {"sub": "..", "iat": .., "exp": ..}，
+ * 即「项目ID 放 sub、且完全不发 iss」——该实现已在真实 App 中验证可用。
+ * 因此 iss（开发者ID）在本项目里是可选的，留空即与可用实现完全一致。
+ *
  * 注意两个容易写错的地方（写错会直接 401）：
  *   1) header.alg 的取值是 JOSE 规范的 "EdDSA"，不是算法名 "ED25519"
  *   2) 项目ID 放在 sub，iss 是「开发者ID」（Q 开头的 10 位），两者不是同一个值

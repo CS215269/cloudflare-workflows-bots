@@ -98,14 +98,18 @@ JWT 需要 **4 个值**（常被误称为「三件套」）：
 | 凭据ID | `QWEATHER_KID` | `header.kid` | 控制台 → 项目管理 → 凭据 |
 | Ed25519 私钥 | `QWEATHER_PRIVATE_KEY` | 用于签名 | 本地生成；公钥需上传到控制台 |
 | API Host | `QWEATHER_HOST` | 请求域名 | 控制台 → 设置 |
-| 开发者ID（可选） | `QWEATHER_DEV_ID` | `payload.iss` | 控制台 → 设置 |
+| 开发者ID（一般不需要） | `QWEATHER_DEV_ID` | `payload.iss` | 控制台 → 设置 |
 
 两个最常见的坑（写错直接 401）：
 
 - `header.alg` 必须是 **`EdDSA`**，不是 `ED25519` —— 后者是算法名，不是 JOSE 的 `alg` 取值
 - **项目ID 放 `sub`**，`iss` 是另一个值（开发者ID），两者不能混用
 
-`iss` 是否必填视账号而定，用下面的 `npm run verify:qweather` 实测即可（会分别试「带 iss / 不带 iss / iss=项目ID」三组，看哪组返回 `code=200`）。
+**关于 `iss`**：官方 Android SDK V5.2.2 的 `com.qweather.sdk.JWTGenerator` 实际拼的是
+`{"alg": "EdDSA", "kid": ".."}` + `{"sub": "<项目ID>", "iat": .., "exp": ..}` ——
+**根本不发 `iss`**，而该实现已在真实 App 中验证可用。所以本项目默认也不发 `iss`，
+`QWEATHER_DEV_ID` 留空即可。若将来官方收紧校验，再填上开发者ID，并用
+`npm run verify:qweather` 复测（脚本会依次试「不带 iss / 带开发者ID / iss=项目ID」三组）。
 
 > 提示：**Workers Workflows 已包含在 Workers Free 与 Paid 计划中**，无需付费订阅即可部署 `[[workflows]]` 绑定（官方定价页 FAQ：Are Workflows available on the Workers Free plan? → Yes）。
 > 免费计划的唯一硬约束是 **CPU 时间 10 ms / 每次调用**（本项目每个 Workflow step 各自是一次独立调用，因此每个 step 各有 10 ms 预算）。
