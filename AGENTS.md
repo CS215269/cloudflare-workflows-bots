@@ -34,15 +34,20 @@
 - 代码实现：和风天气 / Open-Meteo / wttr.in 多源采集 → 聚合交叉校验 → 飞书卡片 → Workflow 编排
 - 4 个阻塞 bug 修复：`WorkflowEntrypoint` 改名、workers-types 升 v5、tsconfig 拆分、`Uint8Array<ArrayBuffer>` 泛型
 - `npm run typecheck` —— src 与 scripts 两个 project 全绿
-- `npm run preview` —— 33/33 通过（离线，不需要网络 / 账号 / 密钥）
-- monorepo 骨架（npm workspaces）+ git 初始化，remote 已指向 GitHub 仓库
+- `npm run preview` —— 35/35 通过（离线，不需要网络 / 账号 / 密钥）
+- 和风天气 JWT 3 处 401 bug 修复：`alg` 从 `ED25519` → `EdDSA`、项目ID 从 `iss` → `sub`、`iat` 提前 30s；新增 `QWEATHER_DEV_ID`（iss，可选）
+- 新增 `npm run verify:qweather`：用真实凭据打真实 API，自动试「带 iss / 不带 iss / iss=项目ID」三组，实测 `iss` 到底要不要
+- monorepo 骨架（npm workspaces）+ git 初始化，remote 已指向 GitHub 仓库，**已 push**
 
 **未完成**（都需要用户凭据或交互，AI 无法代劳）
 
-- [ ] `git push -u origin main`（Git Credential Manager 已配置，会弹浏览器授权）
-- [ ] `npx wrangler login`
-- [ ] `npx wrangler secret put FEISHU_WEBHOOK_URL`（必填）/ `FEISHU_SECRET`（开了签名校验才要）/ `QWEATHER_API_KEY`（或 JWT 三件套）
-- [ ] `npx wrangler deploy` → Worker 名 `myweather-bot`，地址 `myweather-bot.cs215269.workers.dev`
+- [x] ~~`git push -u origin main`~~ 已完成
+- [ ] 选择部署方式（二选一）：
+  - **Workers Builds（网页）**：后台 Import a Git repository → Root directory 留空、Build `npm ci`、Deploy `npm run deploy:weather`。授权范围只有这一个 GitHub 仓库，比 wrangler 的账号级权限更窄
+  - **本地 wrangler**：`npx wrangler login` + `npx wrangler deploy`
+- [ ] 配置机密：`FEISHU_WEBHOOK_URL`（必填）/ `FEISHU_SECRET`（开了签名校验才要）/ 和风天气用 `QWEATHER_API_KEY`，或用 JWT 的 4 个值（`PROJECT_ID` / `KID` / `PRIVATE_KEY` / `HOST`，`DEV_ID` 可选）
+- [ ] 先跑 `npm run verify:qweather` 确认鉴权通过，再部署（能省掉"部署完才发现 401"）
+- [ ] 部署 → Worker 名 `myweather-bot`，地址 `myweather-bot.cs215269.workers.dev`
 - [ ] 云端冒烟：`/health`、`/preview?mode=today`、`POST /trigger?mode=today`、`wrangler tail`
 - [ ] 决定 `workflows-starter-template` 是否删除（目前仍在线上，**不占 cron 额度**，可留作 Workflows 试验田）
 

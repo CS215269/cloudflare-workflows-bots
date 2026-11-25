@@ -250,6 +250,7 @@ const pkcs8Pem = privateKey.export({ type: "pkcs8", format: "pem" }).toString();
 const jwtNow = 1763946000000;
 const token = await createQWeatherToken({
   projectId: "proj-123",
+  developerId: "Q123456789",
   kid: "kid-abc",
   privateKeyPem: pkcs8Pem,
   now: jwtNow,
@@ -257,10 +258,17 @@ const token = await createQWeatherToken({
 const [h, p, s] = token.split(".");
 const header = JSON.parse(Buffer.from(h, "base64url").toString());
 const payload = JSON.parse(Buffer.from(p, "base64url").toString());
-check("JWT header alg=ED25519", header.alg === "ED25519", JSON.stringify(header));
+check("JWT header alg=EdDSA", header.alg === "EdDSA", JSON.stringify(header));
 check("JWT header kid", header.kid === "kid-abc");
-check("JWT payload iss=ProjectID", payload.iss === "proj-123");
+check("JWT payload sub=项目ID", payload.sub === "proj-123", String(payload.sub));
+check("JWT payload iss=开发者ID", payload.iss === "Q123456789", String(payload.iss));
+check("JWT payload iat 提前 30s", payload.iat === jwtNow / 1000 - 30, String(payload.iat));
 check("JWT payload exp-iat=3600", payload.exp - payload.iat === 3600, String(payload.exp - payload.iat));
+check(
+  "JWT 不含 typ/aud/nbf 保留字段",
+  !("typ" in header) && !("aud" in payload) && !("nbf" in payload),
+  JSON.stringify(header),
+);
 const verified = verify(
   null,
   Buffer.from(`${h}.${p}`),
@@ -273,24 +281,36 @@ check("JWT 签名可被公钥验证", verified);
 const bareSeed = privateKey.export({ type: "pkcs8", format: "der" }).subarray(16);
 const bareToken = await createQWeatherToken({
   projectId: "proj-123",
+  developerId: "Q123456789",
   kid: "kid-abc",
   privateKeyPem: bareSeed.toString("base64"),
   now: jwtNow,
 });
 check("裸 Base64 私钥可生成 JWT", bareToken.split(".").length === 3);
 
-// 若仓库中存在 Android 端的 local.properties，则用真实私钥验证格式兼容性
-try {
-  const props = await import("node:fs/promises");
-  const raw = await props.readFile(new URL("../../local.properties", import.meta.url), "utf8");
-  const line = raw.split(/\r?\n/).find((l) => l.startsWith("breezy.qweather.private_key="));
-  if (line) {
-    const key = line.slice("breezy.qweather.private_key=".length).trim();
-    const t = await createQWeatherToken({ projectId: "p", kid: "k", privateKeyPem: key, now: jwtNow });
-    check("Android local.properties 中的私钥格式可用", t.split(".").length === 3);
-  }
-} catch {
-  console.log("ℹ️ 未找到 local.properties，跳过真实私钥兼容性检查");
+// 未提供开发者ID时应省略 iss，而不是把项目ID硬塞进 iss（旧实现的 bug）
+const noIssToken = await createQWeatherToken({
+  projectId: "proj-123",
+  kid: "kid-abc",
+  privateKeyPem: pkcs8Pem,
+  now: jwtNow,
+});
+const noIssPayload = JSON.parse(Buffer.from(noIssToken.split(".")[1], "base64url").toString());
+check("未提供开发者ID时省略 iss", !("iss" in noIssPayload), JSON.stringify(noIssPayload));
+
+// 若本机设置了真实私钥（QWEATHER_PRIVATE_KEY），验证它确实能被解析并签发。
+// 注意：本脚本不读取任何 local.properties，机密只通过环境变量传入。
+const realKey = process.env.QWEATHER_PRIVATE_KEY?.trim();
+if (realKey) {
+  const realToken = await createQWeatherToken({
+    projectId: "proj-123",
+    kid: "kid-abc",
+    privateKeyPem: realKey,
+    now: jwtNow,
+  });
+  check("真实私钥格式可用", realToken.split(".").length === 3);
+} else {
+  console.log("ℹ️ 未设置 QWEATHER_PRIVATE_KEY，跳过真实私钥兼容性检查");
 }
 
 // ---------------------------------------------------------------------------

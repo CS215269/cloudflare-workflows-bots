@@ -9,6 +9,7 @@
     "deploy": "wrangler deploy",
     "tail": "wrangler tail",
     "preview": "node scripts/preview.ts",
+    "verify:qweather": "node scripts/verify-qweather.ts",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.scripts.json"
   },
   "devDependencies": {

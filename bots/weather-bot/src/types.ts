@@ -88,6 +88,8 @@ export interface Env {
   QWEATHER_API_KEY?: string;
   /** 和风天气：JWT 认证所需参数 */
   QWEATHER_PROJECT_ID?: string;
+  /** 和风天气：开发者ID（Q 开头 10 位），JWT 的 iss；不填则省略 iss */
+  QWEATHER_DEV_ID?: string;
   QWEATHER_KID?: string;
   QWEATHER_PRIVATE_KEY?: string;
   QWEATHER_HOST?: string;

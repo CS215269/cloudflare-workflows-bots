@@ -64,12 +64,15 @@ async function buildAuth(env: Env): Promise<{ headers: Record<string, string>; k
   if (env.QWEATHER_API_KEY?.trim()) {
     return { headers: {}, keyParam: env.QWEATHER_API_KEY.trim() };
   }
-  const { QWEATHER_PROJECT_ID, QWEATHER_KID, QWEATHER_PRIVATE_KEY } = env;
+  const { QWEATHER_PROJECT_ID, QWEATHER_DEV_ID, QWEATHER_KID, QWEATHER_PRIVATE_KEY } = env;
   if (!QWEATHER_PROJECT_ID || !QWEATHER_KID || !QWEATHER_PRIVATE_KEY) {
-    throw new Error("和风天气认证配置缺失：需要 QWEATHER_API_KEY，或 ProjectID+KID+私钥");
+    throw new Error(
+      "和风天气认证配置缺失：需要 QWEATHER_API_KEY，或 QWEATHER_PROJECT_ID + QWEATHER_KID + QWEATHER_PRIVATE_KEY",
+    );
   }
   const token = await createQWeatherToken({
     projectId: QWEATHER_PROJECT_ID,
+    developerId: QWEATHER_DEV_ID,
     kid: QWEATHER_KID,
     privateKeyPem: QWEATHER_PRIVATE_KEY,
   });

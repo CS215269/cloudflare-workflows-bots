@@ -10,6 +10,7 @@
   "scripts": {
     "typecheck": "npm run typecheck --workspaces --if-present",
     "preview": "npm run preview --workspaces --if-present",
+    "verify:qweather": "npm run verify:qweather --workspace myweather-bot",
     "deploy:weather": "npm run deploy --workspace myweather-bot",
     "dev:weather": "npm run dev --workspace myweather-bot",
     "tail:weather": "npm run tail --workspace myweather-bot"

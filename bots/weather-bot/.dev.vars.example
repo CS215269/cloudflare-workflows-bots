@@ -9,6 +9,9 @@ QWEATHER_API_KEY=
 
 # 方式二：JWT(Ed25519) 认证（可复用 Android 端 local.properties 里的凭据）
 QWEATHER_PROJECT_ID=
+# 开发者ID（Q 开头 10 位，控制台-设置里查看）→ 写进 JWT 的 iss
+# 不确定要不要填就留空，然后跑 npm run verify:qweather 实测
+QWEATHER_DEV_ID=
 QWEATHER_KID=
 QWEATHER_PRIVATE_KEY=
 QWEATHER_HOST=

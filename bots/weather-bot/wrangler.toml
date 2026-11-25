@@ -44,10 +44,15 @@ ENABLE_WTTR = "0"
 #   FEISHU_WEBHOOK_URL   飞书群自定义机器人 Webhook 地址（必填）
 #   FEISHU_SECRET       飞书机器人签名校验密钥（若开启了“签名校验”则必填）
 #   QWEATHER_API_KEY    和风天气 API Key（与 JWT 二选一）
-#   QWEATHER_PROJECT_ID 和风天气 ProjectID（JWT 模式）
-#   QWEATHER_KID        和风天气 KID（JWT 模式）
-#   QWEATHER_PRIVATE_KEY和风天气 Ed25519 私钥 PEM（JWT 模式）
-#   QWEATHER_HOST       和风天气 API 域名，例如 abcxyz.m.qweather.com（JWT 模式可选）
+#   QWEATHER_PROJECT_ID 和风天气 项目ID  -> JWT payload.sub
+#   QWEATHER_DEV_ID     和风天气 开发者ID（Q 开头 10 位）-> JWT payload.iss（可选）
+#   QWEATHER_KID        和风天气 凭据ID  -> JWT header.kid
+#   QWEATHER_PRIVATE_KEY和风天气 Ed25519 私钥（PEM 或纯 Base64 均可）
+#   QWEATHER_HOST       和风天气 API Host，例如 abcxyz.qweatherapi.com
+#
+# 注意：JWT 的 header.alg 必须是 "EdDSA"（不是 "ED25519"）；
+#      项目ID 放 sub，开发者ID 放 iss，两者不是同一个值。
+#      iss 是否必填可用 `npm run verify:qweather` 实测（脚本会三种组合各试一次）。
 # ---------------------------------------------------------------------------
 
 [observability]

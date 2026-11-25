@@ -1,20 +1,31 @@
 /**
  * 和风天气 JWT（Ed25519）生成。
  *
- * 参考：https://dev.qweather.com/docs/authentication/
- * header: {"alg":"ED25519","kid":"<KID>"}
- * payload:{"iss":"<ProjectID>","iat":<秒>,"exp":<秒>}
+ * 参考：https://dev.qweather.com/docs/configuration/authentication/
+ * header: {"alg":"EdDSA","kid":"<凭据ID>"}
+ * payload:{"iss":"<开发者ID>","sub":"<项目ID>","iat":<秒>,"exp":<秒>}
+ *
+ * 注意两个容易写错的地方（写错会直接 401）：
+ *   1) header.alg 的取值是 JOSE 规范的 "EdDSA"，不是算法名 "ED25519"
+ *   2) 项目ID 放在 sub，iss 是「开发者ID」（Q 开头的 10 位），两者不是同一个值
  */
 
 export interface JwtOptions {
+  /** 项目ID，写入 payload.sub */
   projectId: string;
+  /** 开发者ID（Q 开头 10 位），写入 payload.iss；不提供则省略该字段 */
+  developerId?: string;
+  /** 凭据ID，写入 header.kid */
   kid: string;
   privateKeyPem: string;
-  /** 有效期（秒），默认 3600 */
+  /** 有效期（秒），默认 3600（官方上限 86400） */
   expiresIn?: number;
   /** 当前时间（毫秒），便于测试注入 */
   now?: number;
 }
+
+/** 官方建议 iat 取当前时间前 30 秒，避免设备时钟偏差导致 401 */
+const IAT_SKEW_SECONDS = 30;
 
 function base64UrlEncode(bytes: Uint8Array): string {
   let binary = "";
@@ -54,16 +65,19 @@ export function parsePrivateKey(privateKey: string): Uint8Array<ArrayBuffer> {
 
 /** 生成和风天气 JWT token */
 export async function createQWeatherToken(opts: JwtOptions): Promise<string> {
-  const { projectId, kid, privateKeyPem } = opts;
-  const nowSec = Math.floor((opts.now ?? Date.now()) / 1000);
-  const header = base64UrlEncodeUtf8(JSON.stringify({ alg: "ED25519", kid }));
-  const payload = base64UrlEncodeUtf8(
-    JSON.stringify({
-      iss: projectId,
-      iat: nowSec,
-      exp: nowSec + (opts.expiresIn ?? 3600),
-    }),
-  );
+  const { projectId, developerId, kid, privateKeyPem } = opts;
+  const iat = Math.floor((opts.now ?? Date.now()) / 1000) - IAT_SKEW_SECONDS;
+  const exp = iat + (opts.expiresIn ?? 3600);
+
+  const header = base64UrlEncodeUtf8(JSON.stringify({ alg: "EdDSA", kid }));
+
+  // 只放官方指定的字段，不要加 typ / aud / nbf（官方明确建议移除）
+  const claims: Record<string, string | number> = {};
+  if (developerId) claims.iss = developerId;
+  claims.sub = projectId;
+  claims.iat = iat;
+  claims.exp = exp;
+  const payload = base64UrlEncodeUtf8(JSON.stringify(claims));
   const signingInput = `${header}.${payload}`;
 
   let der: Uint8Array<ArrayBuffer>;

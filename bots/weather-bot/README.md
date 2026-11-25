@@ -74,10 +74,11 @@ npx wrangler secret put FEISHU_WEBHOOK_URL   # 飞书群「自定义机器人」
 npx wrangler secret put FEISHU_SECRET       # 若机器人开了「签名校验」才需要
 npx wrangler secret put QWEATHER_API_KEY    # 和风天气 API Key（与下面 JWT 二选一）
 # 或者复用 Android 端 local.properties 里的 JWT 凭据：
-npx wrangler secret put QWEATHER_PROJECT_ID
-npx wrangler secret put QWEATHER_KID
-npx wrangler secret put QWEATHER_PRIVATE_KEY   # PEM 或纯 Base64 均可
-npx wrangler secret put QWEATHER_HOST          # 可选，如 abcxyz.m.qweather.com
+npx wrangler secret put QWEATHER_PROJECT_ID   # 项目ID -> JWT payload.sub
+npx wrangler secret put QWEATHER_KID          # 凭据ID -> JWT header.kid
+npx wrangler secret put QWEATHER_PRIVATE_KEY  # PEM 或纯 Base64 均可
+npx wrangler secret put QWEATHER_HOST         # 你的专属 API Host，如 abcxyz.qweatherapi.com
+npx wrangler secret put QWEATHER_DEV_ID       # 可选：开发者ID（Q 开头 10 位）-> JWT payload.iss
 
 # 3) 按需调整城市与开关（wrangler.toml 的 [vars]）
 #    CITY_ID=101010100  CITY_NAME=北京  LAT=39.9042  LON=116.4074
@@ -86,6 +87,25 @@ npx wrangler secret put QWEATHER_HOST          # 可选，如 abcxyz.m.qweather.
 # 4) 部署
 npx wrangler deploy
 ```
+
+### 和风天气 JWT 认证要点
+
+JWT 需要 **4 个值**（常被误称为「三件套」）：
+
+| 值 | 环境变量 | 写进 JWT 的位置 | 在哪拿 |
+|---|---|---|---|
+| 项目ID | `QWEATHER_PROJECT_ID` | `payload.sub` | 控制台 → 项目管理 |
+| 凭据ID | `QWEATHER_KID` | `header.kid` | 控制台 → 项目管理 → 凭据 |
+| Ed25519 私钥 | `QWEATHER_PRIVATE_KEY` | 用于签名 | 本地生成；公钥需上传到控制台 |
+| API Host | `QWEATHER_HOST` | 请求域名 | 控制台 → 设置 |
+| 开发者ID（可选） | `QWEATHER_DEV_ID` | `payload.iss` | 控制台 → 设置 |
+
+两个最常见的坑（写错直接 401）：
+
+- `header.alg` 必须是 **`EdDSA`**，不是 `ED25519` —— 后者是算法名，不是 JOSE 的 `alg` 取值
+- **项目ID 放 `sub`**，`iss` 是另一个值（开发者ID），两者不能混用
+
+`iss` 是否必填视账号而定，用下面的 `npm run verify:qweather` 实测即可（会分别试「带 iss / 不带 iss / iss=项目ID」三组，看哪组返回 `code=200`）。
 
 > 提示：**Workers Workflows 已包含在 Workers Free 与 Paid 计划中**，无需付费订阅即可部署 `[[workflows]]` 绑定（官方定价页 FAQ：Are Workflows available on the Workers Free plan? → Yes）。
 > 免费计划的唯一硬约束是 **CPU 时间 10 ms / 每次调用**（本项目每个 Workflow step 各自是一次独立调用，因此每个 step 各有 10 ms 预算）。
@@ -101,6 +121,11 @@ npm run typecheck
 # 本地自检：mock 数据跑通 采集→聚合→渲染，含时间换算 / Cron 映射 / 飞书签名 / JWT 断言
 # 只需 Node ≥ 22.6，无需装依赖、无需网络、无需 Cloudflare 账号
 node scripts/preview.ts
+
+# 真实鉴权自检：用 .dev.vars 或环境变量里的真实凭据，向和风天气发一次真实请求
+# 会打印 API Host / 项目ID / 三种 iss 组合各自的返回码，并明确告诉你要不要配 QWEATHER_DEV_ID
+# 不读取 local.properties 等任何外部文件
+npm run verify:qweather
 
 # 本地起服务（需先 cp .dev.vars.example .dev.vars 并填入真实值）
 npm run dev
