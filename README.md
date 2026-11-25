@@ -20,6 +20,7 @@ cloudflare-workflows-bots/
 │   │   └── README.md                 # 该 bot 的详细文档
 │   └── <新 bot>/
 ├── packages/                 # 跨 bot 复用的代码（卡片渲染 / 多源聚合 / 飞书签名）
+├── AGENTS.md                 # 工作上下文：关键决策、当前状态、待办清单
 ├── package.json              # npm workspaces 根
 └── README.md
 ```
